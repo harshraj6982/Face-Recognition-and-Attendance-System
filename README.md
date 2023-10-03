@@ -38,9 +38,9 @@ Create a User Faces Directory
   mkdir user_faces
 ```
 - Add User Faces in user_faces directory in order to train and Recognize Face from Live Feed.
-- Note: Images should be in the .jpg format and file name should be the name of the Person. For Example, Image of Elon Musk should be saved as ElonMusk.jpg
 - Each file in the user_faces directory must have a unique File Name.
 - Also, Only 1 image of a user must be there in user_faces directory. 
+- Note: Images should be in the .jpg format and file name should be the name of the Person. For Example, Image of Elon Musk should be saved as ElonMusk.jpg
 
 Create Virtual Environment
 
