@@ -1,0 +1,4 @@
+venv
+.pyc
+user_faces
+.DS_Store
