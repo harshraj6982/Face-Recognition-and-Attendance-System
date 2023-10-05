@@ -1,6 +1,7 @@
 import cv2
 import face_recognition
 import os
+import platform
 import numpy as np
 from gtts import gTTS
 from datetime import datetime
@@ -21,41 +22,61 @@ for cl in mylist:
         images.append(curImg)
         classNames.append(os.path.splitext(cl)[0])
 
-# Function to play an audio sound using 'afplay' (macOS specific)
-def play_sound(path):
-    os.system(f'afplay {path}')  # Play the audio file
+# Function to play an audio sound
+def play_sound(audio_file_path):
+    # Determine the appropriate audio playback command based on the platform
+    if platform.system() == 'Darwin':  # macOS
+        audio_playback_command = 'afplay {}'
+    elif platform.system() == 'Windows':  # Windows (assuming `mpg123` is installed)
+        audio_playback_command = 'mpg123 {}'
+    elif platform.system() == 'Linux':  # Linux (assuming `mpg123` is installed)
+        audio_playback_command = 'mpg123 {}'
+    else:
+        raise NotImplementedError("Unsupported operating system")
+
+    os.system(audio_playback_command.format(audio_file_path))
+
+# Function to play closing sound
+def play_closing_sound():
+    # Use gTTS to speak the attendance message
+    message = f'Today, You Have Marked {len(existing_names)} Attendance. Please Check Attendance.csv File.'
+    tts = gTTS(message)
+    tts.save('closing_message.mp3')
+    play_sound('closing_message.mp3')  # Play the audio file
+    os.remove('closing_message.mp3')  # Delete the temporary audio file
+ 
+def speak_encoding():
+    play_sound("sounds/encoding.mp3") # Play an encoding sound
+
+def speak_encoded():
+    play_sound("sounds/encoded.mp3")  # Play an encoded sound
 
 # Function to encode faces in user images
 def findEncodings(images):
-    play_sound("sounds/encoding.mp3")  # Play an encoding sound
     encodeList = []
     for img in images:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         encoded_face = face_recognition.face_encodings(img)[0]
         encodeList.append(encoded_face)
-    play_sound("sounds/encoded.mp3")  # Play an encoded sound
     return encodeList
+
+# Speak Encoding Message
+encoding_thread = threading.Thread(target=speak_encoding)
+encoding_thread.start()
 
 # Encode the faces in user images and store the encodings
 encoded_face_train = findEncodings(images)
 
-# Function to mark attendance and play a sound message
-import cv2
-import face_recognition
-import os
-import numpy as np
-from gtts import gTTS
-from datetime import datetime
-import threading
+# Speak Encoded Message
+encoded_thread = threading.Thread(target=speak_encoded)
+encoded_thread.start()
 
-# ... (Previous code)
+# Create a set to store existing names for faster lookup
+existing_names = set()
 
 # Function to mark attendance and play a sound message
 def markAttendance(name):
     if name != "Unknown":
-        # Create a set to store existing names for faster lookup
-        existing_names = set()
-
         with open('Attendance.csv', 'r+') as f:
             for line in f:
                 entry = line.split(',')
@@ -75,10 +96,10 @@ def markAttendance(name):
 
             # Perform the blocking operations in a separate thread
             def speak_marking():
-                os.system('afplay attendance_message.mp3')  # Play the audio file
+                play_sound('attendance_message.mp3')  # Play the audio file
                 os.remove('attendance_message.mp3')  # Delete the temporary audio file
 
-            # Start a new thread to perform the marking operations
+            # Start a new thread to play the marking sound
             marking_thread = threading.Thread(target=speak_marking)
             marking_thread.start()
 
@@ -110,6 +131,7 @@ while True:
             known_face_names.append(name)
 
             if known_face_names.count(name) >= 5:
+                name=name.title()
                 markAttendance(name)  # Mark attendance only if recognized consistently
                 known_face_names.clear()
 
@@ -127,3 +149,6 @@ while True:
 # Release the webcam and close all OpenCV windows
 cap.release()
 cv2.destroyAllWindows()
+
+# Play the closing sound
+play_closing_sound()
