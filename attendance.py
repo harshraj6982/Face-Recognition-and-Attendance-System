@@ -4,6 +4,7 @@ import os
 import numpy as np
 from gtts import gTTS
 from datetime import datetime
+import threading
 
 # Define the path to the directory containing user face images
 path = 'user_faces'
@@ -39,12 +40,23 @@ def findEncodings(images):
 encoded_face_train = findEncodings(images)
 
 # Function to mark attendance and play a sound message
+import cv2
+import face_recognition
+import os
+import numpy as np
+from gtts import gTTS
+from datetime import datetime
+import threading
+
+# ... (Previous code)
+
+# Function to mark attendance and play a sound message
 def markAttendance(name):
     if name != "Unknown":
         # Create a set to store existing names for faster lookup
         existing_names = set()
 
-        with open('Attendance.csv', 'r') as f:
+        with open('Attendance.csv', 'r+') as f:
             for line in f:
                 entry = line.split(',')
                 existing_names.add(entry[0].strip())
@@ -60,8 +72,15 @@ def markAttendance(name):
             message = f'{name} attendance has been marked'
             tts = gTTS(message)
             tts.save('attendance_message.mp3')
-            os.system('afplay attendance_message.mp3')  # Play the audio file
-            os.remove('attendance_message.mp3')  # Delete the temporary audio file
+
+            # Perform the blocking operations in a separate thread
+            def speak_marking():
+                os.system('afplay attendance_message.mp3')  # Play the audio file
+                os.remove('attendance_message.mp3')  # Delete the temporary audio file
+
+            # Start a new thread to perform the marking operations
+            marking_thread = threading.Thread(target=speak_marking)
+            marking_thread.start()
 
 # Initialize the webcam capture
 cap = cv2.VideoCapture(0)
